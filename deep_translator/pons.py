@@ -69,9 +69,11 @@ class PonsTranslator(BaseTranslator):
          @return: bool or raise an Exception
          """
         for lang in languages:
-            if lang not in self._languages.keys():
-                if lang not in self._languages.values():
-                    raise LanguageNotSupportedException(lang)
+            if (
+                lang not in self._languages.keys()
+                and lang not in self._languages.values()
+            ):
+                raise LanguageNotSupportedException(lang)
         return True
 
     def translate(self, word, return_all=False, **kwargs):
@@ -83,41 +85,47 @@ class PonsTranslator(BaseTranslator):
         @type return_all: bool
         @return: str: translated word
         """
-        if self._validate_payload(word, max_chars=50):
-            url = "{}{}-{}/{}".format(self.__base_url, self._source, self._target, word)
-            url = requote_uri(url)
-            response = requests.get(url)
+        if not self._validate_payload(word, max_chars=50):
+            return
 
-            if response.status_code == 429:
-                raise TooManyRequests()
+        url = "{}{}-{}/{}".format(self.__base_url, self._source, self._target, word)
+        url = requote_uri(url)
+        response = requests.get(url)
 
-            if response.status_code != 200:
-                raise RequestError()
+        if response.status_code == 429:
+            raise TooManyRequests()
 
-            soup = BeautifulSoup(response.text, 'html.parser')
-            elements = soup.findAll(self._element_tag, self._element_query)
+        if response.status_code != 200:
+            raise RequestError()
 
-            if not elements:
-                raise ElementNotFoundInGetRequest(word)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        elements = soup.findAll(self._element_tag, self._element_query)
 
-            filtered_elements = []
-            for el in elements:
-                temp = ''
-                for e in el.findAll('a'):
-                    if e.parent.name == 'div':
-                        if e and "/translate/{}-{}/".format(self._target, self._source) in e.get('href'):
-                            temp += e.get_text() + ' '
-                filtered_elements.append(temp)
+        if not elements:
+            raise ElementNotFoundInGetRequest(word)
 
-            if not filtered_elements:
-                raise ElementNotFoundInGetRequest(word)
+        filtered_elements = []
+        for el in elements:
+            temp = ''.join(
+                e.get_text() + ' '
+                for e in el.findAll('a')
+                if e.parent.name == 'div'
+                and e
+                and "/translate/{}-{}/".format(self._target, self._source)
+                in e.get('href')
+            )
 
-            word_list = [word for word in filtered_elements if word and len(word) > 1]
+            filtered_elements.append(temp)
 
-            if not word_list:
-                raise TranslationNotFound(word)
+        if not filtered_elements:
+            raise ElementNotFoundInGetRequest(word)
 
-            return word_list if return_all else word_list[0]
+        word_list = [word for word in filtered_elements if word and len(word) > 1]
+
+        if not word_list:
+            raise TranslationNotFound(word)
+
+        return word_list if return_all else word_list[0]
 
     def translate_words(self, words, **kwargs):
         """
@@ -129,8 +137,5 @@ class PonsTranslator(BaseTranslator):
         if not words:
             raise NotValidPayload(words)
 
-        translated_words = []
-        for word in words:
-            translated_words.append(self.translate(word=word))
-        return translated_words
+        return [self.translate(word=word) for word in words]
 

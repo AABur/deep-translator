@@ -70,9 +70,11 @@ class LingueeTranslator(BaseTranslator):
         @return: bool or raise an Exception
         """
         for lang in languages:
-            if lang not in self._languages.keys():
-                if lang not in self._languages.values():
-                    raise LanguageNotSupportedException(lang)
+            if (
+                lang not in self._languages.keys()
+                and lang not in self._languages.values()
+            ):
+                raise LanguageNotSupportedException(lang)
         return True
 
     def translate(self, word, return_all=False, **kwargs):
@@ -84,34 +86,36 @@ class LingueeTranslator(BaseTranslator):
         @type return_all: bool
         @return: str: translated word
         """
-        if self._validate_payload(word, max_chars=50):
-            # %s-%s/translation/%s.html
-            url = "{}{}-{}/translation/{}.html".format(self.__base_url, self._source, self._target, word)
-            url = requote_uri(url)
-            response = requests.get(url)
+        if not self._validate_payload(word, max_chars=50):
+            return
 
-            if response.status_code == 429:
-                raise TooManyRequests()
+        # %s-%s/translation/%s.html
+        url = "{}{}-{}/translation/{}.html".format(self.__base_url, self._source, self._target, word)
+        url = requote_uri(url)
+        response = requests.get(url)
 
-            if response.status_code != 200:
-                raise RequestError()
-            soup = BeautifulSoup(response.text, 'html.parser')
-            elements = soup.find_all(self._element_tag, self._element_query)
-            if not elements:
-                raise ElementNotFoundInGetRequest(elements)
+        if response.status_code == 429:
+            raise TooManyRequests()
 
-            filtered_elements = []
-            for el in elements:
-                try:
-                    pronoun = el.find('span', {'class': 'placeholder'}).get_text(strip=True)
-                except AttributeError:
-                    pronoun = ''
-                filtered_elements.append(el.get_text(strip=True).replace(pronoun, ''))
+        if response.status_code != 200:
+            raise RequestError()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        elements = soup.find_all(self._element_tag, self._element_query)
+        if not elements:
+            raise ElementNotFoundInGetRequest(elements)
 
-            if not filtered_elements:
-                raise TranslationNotFound(word)
+        filtered_elements = []
+        for el in elements:
+            try:
+                pronoun = el.find('span', {'class': 'placeholder'}).get_text(strip=True)
+            except AttributeError:
+                pronoun = ''
+            filtered_elements.append(el.get_text(strip=True).replace(pronoun, ''))
 
-            return filtered_elements if return_all else filtered_elements[0]
+        if not filtered_elements:
+            raise TranslationNotFound(word)
+
+        return filtered_elements if return_all else filtered_elements[0]
 
     def translate_words(self, words, **kwargs):
         """
@@ -123,8 +127,5 @@ class LingueeTranslator(BaseTranslator):
         if not words:
             raise NotValidPayload(words)
 
-        translated_words = []
-        for word in words:
-            translated_words.append(self.translate(word=word))
-        return translated_words
+        return [self.translate(word=word) for word in words]
 
