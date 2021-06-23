@@ -12,24 +12,35 @@ class DeepL(object):
     """
     _languages = DEEPL_LANGUAGE_TO_CODE
 
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, source="en", target="en", use_free_api=True, **kwargs):
         """
         @param api_key: your DeepL api key.
         Get one here: https://www.deepl.com/docs-api/accessing-the-api/
+        @param source: source language
+        @param target: target language
         """
         if not api_key:
             raise ServerException(401)
         self.version = 'v2'
         self.api_key = api_key
-        self.__base_url = BASE_URLS.get("DEEPL").format(version=self.version)
+        self.source = self._map_language_to_code(source)
+        self.target = self._map_language_to_code(target)
+        if use_free_api:
+            self.__base_url = BASE_URLS.get("DEEPL_FREE").format(version=self.version)
+        else:
+            self.__base_url = BASE_URLS.get("DEEPL").format(version=self.version)
 
-    def translate(self, source, target, text):
+    def translate(self, text, **kwargs):
+        """
+        @param text: text to translate
+        @return: translated text
+        """
         # Create the request parameters.
         translate_endpoint = 'translate'
         params = {
             "auth_key": self.api_key,
-            "target_lang": self._map_language_to_code(target),
-            "source_lang": self._map_language_to_code(source),
+            "source_lang": self.source,
+            "target_lang": self.target,
             "text": text
         }
         # Do the request and check the connection.
@@ -49,23 +60,26 @@ class DeepL(object):
         # Process and return the response.
         return res['translations'][0]['text']
 
-    def translate_batch(self, source, target, batch):
+    def translate_batch(self, batch, **kwargs):
         """
-        translate a batch of texts
-        @param source: source language
-        @param target: target language
         @param batch: list of texts to translate
         @return: list of translations
         """
-        return [self.translate(source, target, text) for text in batch]
+        return [self.translate(text, **kwargs) for text in batch]
 
-    def _is_language_supported(self, lang):
+    def _is_language_supported(self, lang, **kwargs):
         # The language is supported when is in the dicionary.
         return lang == 'auto' or lang in self._languages.keys() or lang in self._languages.values()
 
-    def _map_language_to_code(self, lang):
+    def _map_language_to_code(self, lang, **kwargs):
         if lang in self._languages.keys():
             return self._languages[lang]
         elif lang in self._languages.values():
             return lang
         raise LanguageNotSupportedException(lang)
+
+
+if __name__ == '__main__':
+    d = DeepL(target="de")
+    t = d.translate("I have no idea")
+    print("text: ", t)

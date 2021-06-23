@@ -34,6 +34,7 @@ deep-translator
         :alt: Twitter URL
         :target: https://twitter.com/NidhalBaccouri
 
+
 =======================
 Translation for humans
 =======================
@@ -43,6 +44,17 @@ A flexible **FREE** and **UNLIMITED** tool to translate between different langua
 
 * Free software: MIT license
 * Documentation: https://deep-translator.readthedocs.io.
+
+
+|
+|
+
+.. contents:: Table of Contents
+    :depth: 3
+
+|
+|
+
 
 ==========
 Motivation
@@ -81,6 +93,8 @@ Why you should use it
 - Easy to use and extend
 - Support for most famous universal translators
 - Stable and maintained regularly
+- The API is very easy to use
+- Proxy integration is supported
 
 ========
 Features
@@ -94,6 +108,8 @@ Features
 * Support for the `Yandex translator <https://yandex.com/>`_ (version >= 1.2.1)
 * Support for the `QCRI translator <https://mt.qcri.org/api/>`_ (version >= 1.2.4)
 * Support for the `DeepL translator <https://www.deepl.com/en/translator/>`_ (version >= 1.2.5)
+* Support for the `Papago translator <https://papago.naver.com/>`_ (version >= 1.4.4)
+* Support for proxy usage
 * Automatic single language detection
 * Batch language detection
 * Translate directly from a text file
@@ -122,7 +138,20 @@ Quick Start
     from deep_translator import GoogleTranslator
     translated = GoogleTranslator(source='auto', target='de').translate("keep it up, you are awesome")  # output -> Weiter so, du bist großartig
 
-or from terminal
+or using proxies:
+
+.. code-block:: python
+
+    from deep_translator import GoogleTranslator
+
+    proxies_example = {
+        "https": "34.195.196.27:8080",
+        "http": "34.195.196.27:8080"
+    }
+    translated = GoogleTranslator(source='auto', target='de', proxies=proxies_example).translate("keep it up, you are awesome")  # output -> Weiter so, du bist großartig
+
+
+or even directly from terminal:
 
 .. code-block:: console
 
@@ -152,6 +181,7 @@ Imports
                                  LingueeTranslator,
                                  MyMemoryTranslator,
                                  YandexTranslator,
+                                 PapagoTranslator,
                                  DeepL,
                                  QCRI,
                                  single_detection,
@@ -276,8 +306,9 @@ DeepL Translator
 
 .. note::
 
-    In order to use the DeepL translator, you need to generate an api key. Visit https://www.deepl.com/en/docs-api/
-    for more information
+    In order to use the DeepL translator, you need to generate an api key. Deepl offers a Pro and a free API.
+    deep-translator supports both Pro and free APIs. Just check the examples below.
+    Visit https://www.deepl.com/en/docs-api/ for more information on how to generate your Deepl api key
 
 - Simple translation
 
@@ -285,7 +316,11 @@ DeepL Translator
 
     text = 'Keep it up. You are awesome'
 
-    translated = DeepL("your_api_key").translate(text)
+    translated = DeepL(api_key="your_api_key", source="en", target="en", use_free_api=True).translate(text)
+
+.. note::
+        deep-translator uses free deepl api by default. If you have the pro version then simply set the use_free_api to false.
+
 
 - Translate batch of texts
 
@@ -478,6 +513,41 @@ Microsoft Translator
     translated = MicrosoftTranslator(api_key='some-key', target='german').translate_file('path/to/file')
 
 
+Papago Translator
+---------------------
+
+.. note::
+
+    You need to require a **client id** and **client secret key** if you want to use the papago translator.
+    visit the official website for more information about how to get one.
+
+.. code-block:: python
+
+    text = 'happy coding'
+    translated = PapagoTranslator(client_id='your_client_id', secret_key='your_secret_key', source='en', target='ko').translate(text=text)  # output: 행복한 부호화
+
+
+Proxy usage
+-------------
+
+deep-translator provide out of the box usage of proxies. Just define your proxies config as a dictionary
+and pass it to the corresponding translator. Below is an example using the GoogleTranslator but this feature
+can be used with all supported translators.
+
+.. code-block:: python
+
+    from deep_translator import GoogleTranslator
+
+    # define your proxy configs:
+    proxies_example = {
+        "https": "your https proxy",  # example: 34.195.196.27:8080
+        "http": "your http proxy if available"
+    }
+    translated = GoogleTranslator(source='auto', target='de', proxies=proxies_example).translate("this package is awesome")
+
+
+
+
 Usage from Terminal
 --------------------
 
@@ -486,8 +556,7 @@ the right arguments, which are the translator you want to use, source language, 
 you want to translate.
 
 For example, provide "google" as an argument to use the google translator. Alternatively you can use
-the other supported translators. Just read the documentation to have an overview about the supported
-translators in this library.
+the other supported translators. Just read the documentation to have an overview about the supported translators in this library.
 
 .. code-block:: console
 
@@ -504,6 +573,12 @@ If you want, you can also pass the source and target language by their abbreviat
 .. code-block:: console
 
     $ deep_translator -trans "google" -src "en" -tg "de" -txt "happy coding"
+
+If you want the list of languages supported by a translator service, just pass the translator service as an argument to the -trans flag followed by the -lang/--languages flag. For example:
+
+.. code-block:: console
+
+    $ deep_translator -trans "google" -lang
 
 ======
 Tests
@@ -548,6 +623,23 @@ Links
 Check this article on medium to know why you should use the deep-translator package and how to translate text using python.
 https://medium.com/@nidhalbacc/how-to-translate-text-with-python-9d203139dcf5
 
+======
+Help
+======
+
+If you are facing any problems, please feel free to open an issue.
+Additionally, you can make contact with the author for further information/questions.
+
+Do you like deep-translator?
+You can always help the development of this project by:
+
+- Following on github and/or twitter
+- Promote the project (ex: by giving it a star on github)
+- Watch the github repo for new releases
+- Tweet about the package
+- Help others with issues on github
+- Create issues and pull requests
+- Sponsor the project
 
 ==========
 Next Steps
@@ -619,4 +711,3 @@ Here are some screenshots:
     :width: 100%
     :height: 300
     :alt: screenshot3
-

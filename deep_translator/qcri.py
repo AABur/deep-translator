@@ -1,9 +1,8 @@
 
 import requests
-from requests.utils import requote_uri
-from deep_translator.constants import BASE_URLS
-from deep_translator.exceptions import (RequestError,
-                                        ServerException, TranslationNotFound, TooManyRequests)
+from deep_translator.constants import BASE_URLS, QCRI_LANGUAGE_TO_CODE
+from deep_translator.exceptions import (
+                                        ServerException, TranslationNotFound)
 
 
 class QCRI(object):
@@ -11,7 +10,7 @@ class QCRI(object):
     class that wraps functions, which use the QRCI translator under the hood to translate word(s)
     """
 
-    def __init__(self, api_key=None):
+    def __init__(self, api_key=None, source="en", target="en", **kwargs):
         """
         @param api_key: your qrci api key. Get one for free here https://mt.qcri.org/api/v1/ref
         """
@@ -19,7 +18,8 @@ class QCRI(object):
         if not api_key:
             raise ServerException(401)
         self.__base_url = BASE_URLS.get("QCRI")
-
+        self.source = source
+        self.target = target
         self.api_key = api_key
         self.api_endpoints = {
             "get_languages": "getLanguagePairs",
@@ -40,10 +40,12 @@ class QCRI(object):
         except Exception as e:
             raise e
 
-    def get_supported_languages(self):
-
+    def get_supported_languages(self, **kwargs):
+        # Have no use for this as the format is not what we need
+        # Save this for whenever
         pairs = self._get("get_languages")
-        return pairs
+        # Using a this one instead
+        return QCRI_LANGUAGE_TO_CODE
 
     @property
     def languages(self):
@@ -57,10 +59,10 @@ class QCRI(object):
     def domains(self):
         return self.get_domains()
 
-    def translate(self, source, target, domain, text):
+    def translate(self, text, domain, **kwargs):
         params = {
             "key": self.api_key,
-            "langpair": "{}-{}".format(source, target),
+            "langpair": "{}-{}".format(self.source, self.target),
             "domain": domain,
             "text": text
         }
@@ -74,18 +76,17 @@ class QCRI(object):
                 ServerException(response.status_code)
             else:
                 res = response.json()
-                translation = res["translatedText"]
+                translation = res.get("translatedText")
                 if not translation:
                     raise TranslationNotFound(text)
                 return translation
 
-    def translate_batch(self, source, target, domain, batch):
+    def translate_batch(self, batch, domain, **kwargs):
         """
         translate a batch of texts
-        @param source: source language
-        @param target: target language
+        @domain: domain
         @param batch: list of texts to translate
         @return: list of translations
         """
-        return [self.translate(source, target, domain, text) for text in batch]
+        return [self.translate(domain, text, **kwargs) for text in batch]
 

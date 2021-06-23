@@ -8,7 +8,10 @@ BASE_URLS = {
     "MYMEMORY": "http://api.mymemory.translated.net/get",
     "QCRI": "https://mt.qcri.org/api/v1/{endpoint}?",
     "DEEPL": "https://api.deepl.com/{version}/",
-    "MICROSOFT_TRANSLATE": "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0"
+    "DEEPL_FREE": "https://api-free.deepl.com/v2/",
+    "MICROSOFT_TRANSLATE": "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0",
+    "PAPAGO": "https://papago.naver.com/",
+    "PAPAGO_API": "https://openapi.naver.com/v1/papago/n2mt"
 }
 
 GOOGLE_CODES_TO_LANGUAGES = {
@@ -220,3 +223,28 @@ DEEPL_LANGUAGE_TO_CODE = {
 }
 
 DEEPL_CODE_TO_LANGUAGE = {v: k for k, v in DEEPL_LANGUAGE_TO_CODE.items()}
+
+PAPAGO_CODE_TO_LANGUAGE = {
+    'ko': 'Korean',
+    'en': 'English',
+    'ja': 'Japanese',
+    'zh-CN': 'Chinese',
+    'zh-TW': 'Chinese traditional',
+    'es': 'Spanish',
+    'fr': 'French',
+    'vi': 'Vietnamese',
+    'th': 'Thai',
+    'id': 'Indonesia'
+}
+
+PAPAGO_LANGUAGE_TO_CODE = {v: k for v, k in PAPAGO_CODE_TO_LANGUAGE.items()}
+
+QCRI_CODE_TO_LANGUAGE = {
+    'ar': 'Arabic',
+    'en': 'English',
+    'es': 'Spanish'
+}
+
+QCRI_LANGUAGE_TO_CODE = {
+    v: k for k, v in QCRI_CODE_TO_LANGUAGE.items()
+}
